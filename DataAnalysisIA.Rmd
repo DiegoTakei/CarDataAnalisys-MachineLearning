@@ -28,7 +28,7 @@ cctrl1 <- trainControl(method = "cv", number = 3, returnResamp = "all")
 ```{r}
 mlpModel <- train(Price ~ .,
                  data = dadosFiltrados %>% select(-Vin, -City, -State),
-                 method = "xgbDART",
+                 method = "mlp",
                  preProc = c("center", "scale"),
                  trControl = cctrl1)
 mlpModel

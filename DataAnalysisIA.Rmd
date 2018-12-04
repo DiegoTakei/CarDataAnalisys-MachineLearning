@@ -1,0 +1,35 @@
+---
+title: "IA"
+author: "Diego Takei"
+date: "20 de novembro de 2018"
+output: html_document
+---
+
+```{r, include=FALSE}
+library(tidyverse)
+library(caret)
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+dadosIniciais <- read_csv("true_car_listings.csv")
+dadosFiltrados <- dadosIniciais %>% sample_n(10000)
+```
+
+```{r, crossValidation}
+ctrl <- trainControl(method = "repeatedcv", 
+                     number = 3, 
+                     repeats = 10, 
+                     verboseIter = FALSE)
+cctrl1 <- trainControl(method = "cv", number = 3, returnResamp = "all")
+```
+
+```{r}
+mlpModel <- train(Price ~ .,
+                 data = dadosFiltrados %>% select(-Vin, -City, -State),
+                 method = "xgbDART",
+                 preProc = c("center", "scale"),
+                 trControl = cctrl1)
+mlpModel
+```

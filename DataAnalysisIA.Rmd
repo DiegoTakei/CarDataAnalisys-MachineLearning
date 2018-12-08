@@ -43,6 +43,7 @@ ctrl <- trainControl(method = "repeatedcv",
 cctrl1 <- trainControl(method = "cv", number = 3, returnResamp = "all")
 ```
 
+<<<<<<< HEAD
 ```{r KNN}
 k <- expand.grid(k = seq(20, 100, length=81))
 
@@ -78,11 +79,24 @@ mlpModel <- caret::train(Price ~ Make + Model + State + City + Mileage + Year,
 mlpModel
 ```
 
+```{r eXtreme Gradient Boosting}
+xgModel <- caret::train(Price ~ Make + Model + State + City + Mileage + Year,
+                 data = dados,
+                 method = "xgbDART",
+                 preProc = c("center", "scale"),
+                 trControl = cctrl1)
+xgModel
+plot(xgModel)
+```
+
+
 ```{r Random Forest}
-mlpModel <- caret::train(Price ~ Make + Model + State + City + Mileage + Year,
+forestModel <- caret::train(Price ~ Make + Model + State + City + Mileage + Year,
                  data = dados,
                  method = "cforest",
                  preProc = c("center", "scale"),
                  trControl = cctrl1)
-mlpModel
+forestModel
 ```
+
+

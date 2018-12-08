@@ -46,7 +46,7 @@ cctrl1 <- trainControl(method = "cv", number = 3, returnResamp = "all")
 k <- expand.grid(k = seq(20, 100, length=81))
 
 knnModel <- caret::train(Price ~ Make + Model + State + City + Mileage + Year,
-                 data = dados
+                 data = dados,
                  method = "knn",
                  preProc = c("center", "scale"),
                  trControl = cctrl1,

@@ -10,11 +10,29 @@ library(tidyverse)
 library(caret)
 library(ggplot2)
 library(dplyr)
+library(dataPreparation)
+library(tensorflow)
 ```
 
 ```{r}
-dadosIniciais <- read_csv("true_car_listings.csv")
-dadosFiltrados <- dadosIniciais %>% sample_n(10000)
+dadosIniciais <- readr::read_csv(("true_car_listings.csv"),
+                           col_types = cols(
+                           Year = col_integer(),
+                           Price = col_integer(),
+                           Mileage = col_integer(),
+                           .default = col_character())) %>%
+                               mutate(
+                               Vin = as.factor(Vin),
+                               State = as.factor(State),
+                               City = as.factor(City),
+                               Make = as.factor(Make),
+                               Model = as.factor(Model))
+dadosFiltrados <- dadosIniciais %>% sample_n(30000)
+
+```
+
+```{r tratamento}
+dados <- dadosFiltrados %>% select(-Vin) %>% mutate_if(is.factor, as.numeric)
 ```
 
 ```{r, crossValidation}
@@ -25,10 +43,45 @@ ctrl <- trainControl(method = "repeatedcv",
 cctrl1 <- trainControl(method = "cv", number = 3, returnResamp = "all")
 ```
 
-```{r}
-mlpModel <- train(Price ~ .,
-                 data = dadosFiltrados %>% select(-Vin, -City, -State),
-                 method = "xgbDART",
+```{r KNN}
+k <- expand.grid(k = seq(20, 100, length=81))
+
+knnModel <- caret::train(Price ~ Make + Model + State + City + Mileage + Year,
+                 data = dados
+                 method = "knn",
+                 preProc = c("center", "scale"),
+                 trControl = cctrl1,
+                 tuneGrid = k)
+plot(knnModel)
+knnModel
+```
+
+```{r MLP with TensorFlow}
+mlpModel <- caret::train(Price ~ Make + Model + State + City + Mileage + Year,
+                 data = dados,
+                 method = "mlpKerasDropout",
+                 preProc = c("center", "scale"),
+                 trControl = cctrl1,
+                 tuneGrid = expand.grid(
+                      size = 100, dropout = 0.00, batch_size = 2500, lr = 3, 
+                      rho = 0.9, decay = 0, activation = "relu"))
+mlpModel
+```
+
+```{r MLP without TensorFlow}
+mlpModel <- caret::train(Price ~ Make + Model + State + City + Mileage + Year,
+                 data = dados,
+                 method = "mlp",
+                 preProc = c("center", "scale"),
+                 trControl = cctrl1,
+                 tuneGrid = expand.grid(size = 15))
+mlpModel
+```
+
+```{r Random Forest}
+mlpModel <- caret::train(Price ~ Make + Model + State + City + Mileage + Year,
+                 data = dados,
+                 method = "cforest",
                  preProc = c("center", "scale"),
                  trControl = cctrl1)
 mlpModel

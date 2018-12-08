@@ -42,8 +42,6 @@ ctrl <- trainControl(method = "repeatedcv",
                      verboseIter = FALSE)
 cctrl1 <- trainControl(method = "cv", number = 3, returnResamp = "all")
 ```
-
-<<<<<<< HEAD
 ```{r KNN}
 k <- expand.grid(k = seq(20, 100, length=81))
 

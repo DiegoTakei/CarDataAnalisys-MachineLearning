@@ -27,28 +27,30 @@ dadosIniciais <- readr::read_csv(("true_car_listings.csv"),
                                City = as.factor(City),
                                Make = as.factor(Make),
                                Model = as.factor(Model))
-dadosFiltrados <- dadosIniciais %>% sample_n(30000)
+dadosFiltrados <- dadosIniciais %>% sample_n(50000)
+dadosTreino <- dadosFiltrados %>% sample_n(40000)
+dadosTeste <- dadosFiltrados %>% sample_n(10000)
 
 ```
 
 ```{r tratamento}
-dados <- dadosFiltrados %>% select(-Vin) %>% mutate_if(is.factor, as.numeric)
+treino <- dadosTreino %>% select(-Vin) %>% mutate_if(is.factor, as.numeric)
+teste <- dadosTeste %>% select(-Vin) %>% mutate_if(is.factor, as.numeric)
 ```
 
 ```{r, crossValidation}
 ctrl <- trainControl(method = "repeatedcv", 
-                     number = 3, 
+                     number = 10, 
                      repeats = 10, 
                      verboseIter = FALSE)
-cctrl1 <- trainControl(method = "cv", number = 3, returnResamp = "all")
+cctrl1 <- trainControl(method = "cv", number = 10, returnResamp = "all")
 ```
 
-<<<<<<< HEAD
 ```{r KNN}
 k <- expand.grid(k = seq(20, 100, length=81))
 
 knnModel <- caret::train(Price ~ Make + Model + State + City + Mileage + Year,
-                 data = dados
+                 data = treino,
                  method = "knn",
                  preProc = c("center", "scale"),
                  trControl = cctrl1,
@@ -59,19 +61,19 @@ knnModel
 
 ```{r MLP with TensorFlow}
 mlpModel <- caret::train(Price ~ Make + Model + State + City + Mileage + Year,
-                 data = dados,
+                 data = treino,
                  method = "mlpKerasDropout",
                  preProc = c("center", "scale"),
                  trControl = cctrl1,
                  tuneGrid = expand.grid(
-                      size = 100, dropout = 0.00, batch_size = 2500, lr = 3, 
+                      size = 100, dropout = 0.00, batch_size = 40000, lr = 3, 
                       rho = 0.9, decay = 0, activation = "relu"))
 mlpModel
 ```
 
 ```{r MLP without TensorFlow}
 mlpModel <- caret::train(Price ~ Make + Model + State + City + Mileage + Year,
-                 data = dados,
+                 data = treino,
                  method = "mlp",
                  preProc = c("center", "scale"),
                  trControl = cctrl1,
@@ -81,7 +83,7 @@ mlpModel
 
 ```{r eXtreme Gradient Boosting}
 xgModel <- caret::train(Price ~ Make + Model + State + City + Mileage + Year,
-                 data = dados,
+                 data = treino,
                  method = "xgbDART",
                  preProc = c("center", "scale"),
                  trControl = cctrl1)
@@ -92,11 +94,19 @@ plot(xgModel)
 
 ```{r Random Forest}
 forestModel <- caret::train(Price ~ Make + Model + State + City + Mileage + Year,
-                 data = dados,
+                 data = treino,
                  method = "cforest",
                  preProc = c("center", "scale"),
                  trControl = cctrl1)
 forestModel
 ```
 
+```{r predict}
+knnPredic <- predict(knnModel, teste)
+mlpPredic <- predict(mlpModel, teste)
+
+postResample(pred = knnPredic, obs = teste$Price)
+postResample(pred = mlpPredic, obs = teste$Price)
+
+```
 
